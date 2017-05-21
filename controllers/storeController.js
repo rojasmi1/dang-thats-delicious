@@ -27,10 +27,13 @@ exports.editStore = async (req, res) => {
 }
 
 exports.updateStore = async (req, res) => {
-  let store = await Store.findOneAndUpdate({_id: req.params.id}, req.body, {
-    new: true,
-    runValidators: true
-  }).exec()
+  const store = await Store.findOne({_id: req.params.id})
+  // Update store values
+  store.name = req.body.name
+  store.description = req.body.name
+  store.location = req.body.location
+  store.tags = req.body.tags
+  await store.save()
   req.flash('success', `Successfully Updated ${store.name}. <a href="/stores/${store.slug}">View store >></a>`)
   res.redirect(`/stores/${store.id}/edit`)
 }
