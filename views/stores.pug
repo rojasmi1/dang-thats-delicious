@@ -4,7 +4,7 @@ include mixins/_storeCard
 
 block content
   .inner
-  h1= title
-  .stores
-  each store in stores
-    +storeCard(store)  
+    h1= title
+    .stores
+      each store in stores
+        +storeCard(store)  

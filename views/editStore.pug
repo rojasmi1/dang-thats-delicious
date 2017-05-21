@@ -4,5 +4,5 @@ include mixins/_storeForm
 
 block content
   .inner
-    h2= title
-    +storeForm()
+    h2!= title
+    +storeForm(store)
