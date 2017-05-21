@@ -9,6 +9,7 @@ const passport = require('passport')
 const promisify = require('es6-promisify')
 const flash = require('connect-flash')
 const expressValidator = require('express-validator')
+const methodOverride = require('method-override')
 const routes = require('./routes/index')
 const helpers = require('./helpers')
 const errorHandlers = require('./handlers/errorHandlers')
@@ -26,6 +27,9 @@ app.use(express.static(path.join(__dirname, 'public')))
 // Takes the raw requests and turns them into usable properties on req.body
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
+
+// override with POST having ?_method=DELETE
+app.use(methodOverride('_method'))
 
 // Exposes a bunch of methods for validating data. Used heavily on userController.validateRegister
 app.use(expressValidator())
