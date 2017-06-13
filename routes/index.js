@@ -28,15 +28,17 @@ router.get('/tags', catchErrors(storeController.getStoresByTag))
 
 router.get('/tags/:tag', catchErrors(storeController.getStoresByTag))
 
-router.get('/login', catchErrors(userController.loginForm))
-router.get('/register', catchErrors(userController.registerForm))
+router.get('/login', userController.loginForm)
+router.get('/register', userController.registerForm)
 // 1. Validate the registration data
 // 2. Register user
 // 3. Log them in
-router.post('/login', catchErrors(userController.loginUser))
+router.post('/login', authController.login)
 router.post('/register',
         userController.validateRegister,
         catchErrors(userController.registerUser),
         authController.login)
+
+router.get('/logout', authController.logout)
 
 module.exports = router
