@@ -43,6 +43,7 @@ exports.addStore = (req, res) => {
 }
 
 exports.createStore = async (req, res) => {
+  req.body.author = req.user._id
   // Set location data to be a point
   req.body.location.type = 'Point'
   const store = await (new Store(req.body)).save()
@@ -58,7 +59,14 @@ exports.getStores = async (req, res) => {
 
 exports.editStore = async (req, res) => {
   const store = await Store.findOne({_id: req.params.id})
+  confirmOwner(store, req.user)
   res.render('editStore', {title: `Edit ${store.name}`, store})
+}
+
+const confirmOwner = (store, user) => {
+  if (!store.author.equals(user._id)) {
+    throw Error('You must own a store in order to edit it!')
+  }
 }
 
 exports.updateStore = async (req, res) => {
@@ -77,6 +85,7 @@ exports.updateStore = async (req, res) => {
 
 exports.getStoreBySlug = async (req, res, next) => {
   const store = await Store.findOne({slug: req.params.slug})
+    .populate('author')
   if (!store) {
     return next()
   }
@@ -85,9 +94,26 @@ exports.getStoreBySlug = async (req, res, next) => {
 
 exports.getStoresByTag = async (req, res) => {
   const tag = req.params.tag
-  const tagQuery = tag || { $exists: true}
+  const tagQuery = tag || {$exists: true}
   const tagsPrimise = Store.getTagsList()
   const storesPromise = Store.find({tags: tagQuery})
   const [tags, stores] = await Promise.all([tagsPrimise, storesPromise])
   res.render('tags', {tags, title: 'Tags', tag, stores})
+}
+
+exports.searchStores = async (req, res) => {
+  const query = req.query.q
+  const stores = await Store.find({
+    $text: {
+      $search: query
+    }
+  }, {
+    score: {$meta: 'textScore'}
+  })
+  .sort({
+    score: {$meta: 'textScore'}
+  })
+  .limit(5)
+
+  res.json(stores)
 }
