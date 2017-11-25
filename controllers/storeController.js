@@ -43,10 +43,14 @@ exports.addStore = (req, res) => {
 }
 
 exports.createStore = async (req, res) => {
-  req.body.author = req.user._id
+  const body = req.body
+  body.author = req.user._id
   // Set location data to be a point
-  req.body.location.type = 'Point'
-  const store = await (new Store(req.body)).save()
+  body.location.type = 'Point'
+  // Parse lat and lng to numbers
+  body.location.coordinates = body.location.coordinates.map(parseFloat)
+
+  const store = await (new Store(body)).save()
   req.flash('success', `Successfully Created ${store.name}. Care to leave a review?`)
   res.redirect(`/store/${store.slug}`)
 }
@@ -70,17 +74,21 @@ const confirmOwner = (store, user) => {
 }
 
 exports.updateStore = async (req, res) => {
+  const body = req.body
   // Set location data to be a point
-  req.body.location.type = 'Point'
+  body.location.type = 'Point'
+  // Parse lat and lng to numbers
+  body.location.coordinates = body.location.coordinates.map(parseFloat)
+
   const store = await Store.findOne({_id: req.params.id})
   // Update store values
-  store.name = req.body.name
-  store.description = req.body.name
-  store.location = req.body.location
-  store.tags = req.body.tags
+  store.name = body.name
+  store.description = body.name
+  store.location = body.location
+  store.tags = body.tags
   await store.save()
   req.flash('success', `Successfully Updated ${store.name}. <a href="/store/${store.slug}">View store >></a>`)
-  res.redirect(`/store/${store.id}/edit`)
+  res.redirect(`/stores/${store.id}/edit`)
 }
 
 exports.getStoreBySlug = async (req, res, next) => {
@@ -116,4 +124,28 @@ exports.searchStores = async (req, res) => {
   .limit(5)
 
   res.json(stores)
+}
+
+exports.mapStores = async (req, res) => {
+  const coordinates = [req.query.lng, req.query.lat].map(parseFloat)
+  const q = {
+    location: {
+      $near: {
+        $geometry: {
+          type: 'Point',
+          coordinates
+        },
+        $maxDistance: 10000
+      }
+    }
+  }
+
+  const stores = await Store.find(q)
+    .select('slug name description location photo')
+    .limit(10)
+  res.json(stores)
+}
+
+exports.mapPage = async (req, res) => {
+  res.render('map', {title: 'Map'})
 }
